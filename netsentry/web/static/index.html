@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetSentry — Network Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header>
+    <div class="brand">
+      <span class="brand-icon">⬡</span>
+      <div>
+        <h1>NetSentry</h1>
+        <div class="brand-sub">Network Packet Analyser</div>
+      </div>
+    </div>
+
+    <div class="header-status">
+      <!-- WebSocket connection badge -->
+      <span id="ws-badge" class="badge ws-disconnected">
+        <span id="ws-dot" class="badge-dot dot-disconnected"></span>
+        Disconnected
+      </span>
+
+      <!-- Capture state badge -->
+      <span id="capture-badge" class="badge state-idle">Idle</span>
+
+      <!-- Active interface / filter display -->
+      <span id="capture-iface-display"></span>
+    </div>
+  </header>
+
+  <!-- ── Stats bar ──────────────────────────────────────────────────────── -->
+  <div class="card" style="margin:10px 12px 0;border-radius:8px;">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value" id="stat-packets">0</div>
+        <div class="stat-label">Total Packets</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="stat-pps">0/s</div>
+        <div class="stat-label">Packets / sec</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="stat-bytes">0 B</div>
+        <div class="stat-label">Traffic Volume</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="stat-alerts" style="color:var(--red)">0</div>
+        <div class="stat-label">Security Alerts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main content ───────────────────────────────────────────────────── -->
+  <div class="main-content">
+
+    <!-- Left column: controls + charts ──────────────────────────────── -->
+    <div class="left-col">
+
+      <!-- Capture controls -->
+      <div class="card">
+        <div class="card-header">Capture Controls</div>
+        <div class="card-body">
+          <div class="control-group">
+            <div>
+              <label for="iface-select">Network Interface</label>
+              <select id="iface-select"></select>
+            </div>
+            <div>
+              <label for="bpf-input">BPF Filter <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+              <input type="text" id="bpf-input" placeholder="e.g. tcp port 443">
+            </div>
+            <div id="error-msg" role="alert"></div>
+            <div class="btn-row">
+              <button id="btn-start" class="btn-primary">Start Capture</button>
+              <button id="btn-stop"  class="btn-danger" disabled>Stop Capture</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Traffic charts -->
+      <div class="card">
+        <div class="card-header">Live Traffic</div>
+        <div class="charts-row" style="padding-top:8px">
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);padding:0 0 4px 2px;text-transform:uppercase;letter-spacing:.4px">Packets/sec</div>
+            <canvas id="chart-pps" style="height:90px"></canvas>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);padding:0 0 4px 2px;text-transform:uppercase;letter-spacing:.4px">Protocol Mix</div>
+            <canvas id="chart-proto" style="height:90px"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security alerts -->
+      <div class="card" style="flex:1">
+        <div class="card-header">
+          Security Alerts
+          <button id="btn-clear-alerts" class="btn-ghost" style="padding:3px 8px;font-size:10px">Clear</button>
+        </div>
+        <div id="alert-list" class="alert-scroll">
+          <p class="empty-state" style="padding:20px 0">No security alerts detected.</p>
+        </div>
+      </div>
+
+    </div><!-- /left-col -->
+
+    <!-- Right column: packet table ──────────────────────────────────── -->
+    <div class="right-col">
+      <div class="card" style="flex:1">
+        <div class="card-header">
+          Live Packet Feed
+        </div>
+        <div class="table-toolbar">
+          <input type="text" id="pkt-search" placeholder="Search src, dst, protocol…" style="max-width:220px">
+          <select id="pkt-proto-filter" class="filter-select">
+            <option value="">All protocols</option>
+            <option value="TCP">TCP</option>
+            <option value="UDP">UDP</option>
+            <option value="DNS">DNS</option>
+            <option value="ICMP">ICMP</option>
+            <option value="ARP">ARP</option>
+            <option value="IPv6">IPv6</option>
+            <option value="OTHER">OTHER</option>
+          </select>
+          <span id="pkt-count" class="table-count"></span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Proto</th>
+                <th>Source IP</th>
+                <th>S.Port</th>
+                <th>Dest IP</th>
+                <th>D.Port</th>
+                <th>Size</th>
+                <th>Flags</th>
+              </tr>
+            </thead>
+            <tbody id="pkt-tbody">
+              <tr><td colspan="8" class="empty-state">Start a capture to see live packets.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /right-col -->
+
+  </div><!-- /main-content -->
+</div><!-- /#app -->
+
+<script src="/static/app.js"></script>
+</body>
+</html>
