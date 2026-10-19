@@ -154,15 +154,6 @@ Captured traffic may contain sensitive metadata or application information. Hand
 
 ## Screenshots
 
-Add screenshots of the running application to the `screenshots/` directory.
-
-Suggested filenames:
-
-- `screenshots/dashboard.png`
-- `screenshots/security-alerts.png`
-
-Once the screenshots exist, embed them here:
-
 ### Live Traffic Dashboard
 
 ![NetSentry live traffic dashboard](screenshots/dashboard.png)
@@ -200,8 +191,6 @@ Potential future enhancements include:
 ## Author
 
 Developed as a hands-on Python and defensive cybersecurity project.
-
-## License
 
 ## License
 

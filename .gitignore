@@ -14,8 +14,10 @@ env/
 .env.*
 !.env.example
 
-# Captured network traffic
-captures/
+# Captured network traffic -- keep the directory, exclude capture files
+captures/*.pcap
+captures/*.pcapng
+captures/*.cap
 *.pcap
 *.pcapng
 *.cap
