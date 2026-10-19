@@ -203,4 +203,6 @@ Developed as a hands-on Python and defensive cybersecurity project.
 
 ## License
 
-No license has been selected yet. Add a `LICENSE` file before granting others explicit permission to reuse, modify, or distribute the project. Consider an open-source license such as MIT if that matches your intentions.
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
