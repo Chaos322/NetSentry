@@ -61,9 +61,11 @@ const state = {
   reconnectMs:   1000,
   reconnectTimer: null,
 };
-
-// Pending DOM batch for packet table
+// Throttle packet-table rendering to keep the dashboard responsive.
+const PACKET_RENDER_INTERVAL_MS = 150;
 let _pendingPackets = [];
+let _packetRenderTimer = null;
+// Pending DOM batch for packet table
 let _rafScheduled   = false;
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
@@ -84,26 +86,55 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ── Interface loading ──────────────────────────────────────────────────────
+
+
 async function loadInterfaces() {
+  const sel = $("iface-select");
+
+  if (!sel) {
+    console.error('Dropdown "#iface-select" not found.');
+    return;
+  }
+
   try {
-    const r = await fetch("/api/interfaces");
-    const j = await r.json();
-    const sel = $("iface-select");
-    sel.innerHTML = "";
-    (j.interfaces || []).forEach(iface => {
-      const opt = document.createElement("option");
-      opt.value = opt.textContent = iface;
-      sel.appendChild(opt);
+    const response = await fetch("/api/interfaces", {
+      cache: "no-store"
     });
-    if (!j.interfaces?.length) {
-      const opt = document.createElement("option");
-      opt.value = ""; opt.textContent = "No interfaces found";
-      sel.appendChild(opt);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
-  } catch (e) {
-    showError("Failed to load interfaces: " + e.message);
+
+    const data = await response.json();
+    const interfaces = data.interfaces || [];
+
+    sel.replaceChildren();
+
+    if (interfaces.length === 0) {
+      sel.add(new Option("No interfaces found", ""));
+      return;
+    }
+
+    for (const iface of interfaces) {
+      sel.add(new Option(iface, iface));
+    }
+
+    sel.selectedIndex = 0;
+
+    console.log(`NetSentry loaded ${interfaces.length} interfaces.`);
+  } catch (error) {
+    console.error("Failed to load interfaces:", error);
+    sel.replaceChildren(
+      new Option("Failed to load interfaces", "")
+    );
+
+    if (typeof showError === "function") {
+      showError("Failed to load interfaces: " + error.message);
+    }
   }
 }
+
+
 
 // ── WebSocket ─────────────────────────────────────────────────────────────
 function connectWS() {
@@ -170,30 +201,50 @@ function onSnapshot(data) {
   if (data.state)   applyState(data.state, data.interface || "", data.message || "");
 }
 
+
 function onPackets(rows, fromSnapshot = false) {
-  if (!Array.isArray(rows) || !rows.length) return;
-  // Newest first: prepend
-  const incoming = fromSnapshot ? rows.slice().reverse() : rows.slice().reverse();
-  _pendingPackets.push(...incoming);
-  if (!_rafScheduled) {
-    _rafScheduled = true;
-    requestAnimationFrame(flushPacketBatch);
+  if (!Array.isArray(rows) || rows.length === 0) return;
+
+  // Store newest packets first.
+  const incoming = rows.slice().reverse();
+  _pendingPackets = incoming.concat(_pendingPackets);
+
+  // Prevent the pending queue from growing without limit.
+  if (_pendingPackets.length > MAX_PACKET_ROWS) {
+    _pendingPackets.length = MAX_PACKET_ROWS;
+  }
+
+  // Limit table rendering to roughly 6-7 updates per second.
+  if (_packetRenderTimer === null) {
+    _packetRenderTimer = setTimeout(
+      flushPacketBatch,
+      PACKET_RENDER_INTERVAL_MS
+    );
   }
 }
 
 function flushPacketBatch() {
-  _rafScheduled = false;
-  if (!_pendingPackets.length) return;
+  _packetRenderTimer = null;
 
-  // Merge pending into state
-  state.packets.unshift(..._pendingPackets);
+  if (_pendingPackets.length === 0) return;
+
+  const batch = _pendingPackets;
   _pendingPackets = [];
-  if (state.packets.length > MAX_PACKET_ROWS) {
-    state.packets.length = MAX_PACKET_ROWS;
-  }
+
+  // Merge packets and keep the newest 1000.
+  state.packets = batch.concat(state.packets).slice(0, MAX_PACKET_ROWS);
 
   renderPacketTable();
+
+  // Schedule another update if more packets arrived.
+  if (_pendingPackets.length && _packetRenderTimer === null) {
+    _packetRenderTimer = setTimeout(
+      flushPacketBatch,
+      PACKET_RENDER_INTERVAL_MS
+    );
+  }
 }
+
 
 function onStats(data) {
   if (!data) return;
@@ -254,14 +305,25 @@ function updateCaptureStateBadge(s) {
 }
 
 // ── Controls ───────────────────────────────────────────────────────────────
+
 function updateControls(s) {
-  const canStart = (s === "idle" || s === "error");
-  const canStop  = (s === "starting" || s === "running");
+  const canStart = (
+    s === "idle" ||
+    s === "stopped" ||
+    s === "error"
+  );
+
+  const canStop = (
+    s === "starting" ||
+    s === "running"
+  );
+
   $("btn-start").disabled = !canStart;
-  $("btn-stop").disabled  = !canStop;
+  $("btn-stop").disabled = !canStop;
   $("iface-select").disabled = !canStart;
-  $("bpf-input").disabled    = !canStart;
+  $("bpf-input").disabled = !canStart;
 }
+
 
 async function onStart() {
   clearError();
