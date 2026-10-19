@@ -1,44 +1,81 @@
-# NetSentry — Network Packet Sniffer & Analyzer
+# NetSentry — Advanced Python Packet Sniffer
 
-NetSentry is a Python-based network packet sniffer and analyzer featuring a desktop GUI built with PySide6. It provides real-time network traffic monitoring, protocol statistics, packet inspection, PCAP capture saving, and rule-based security alerts.
-
-The project demonstrates practical skills in network analysis, Python development, multithreading, GUI engineering, and defensive cybersecurity.
+NetSentry is a Python-based network packet monitoring tool with a desktop GUI and a browser-based dashboard. Built with Scapy, PySide6, FastAPI, and WebSockets, it provides real-time packet visibility, traffic statistics, and security alert monitoring.
 
 ## Features
 
-- **Live packet capture** — Capture network traffic using Scapy and Npcap.
-- **Interactive desktop GUI** — Monitor network activity through a dark-themed PySide6 interface.
-- **Network interface selection** — Select and refresh available network interfaces.
-- **BPF filtering** — Filter captured traffic using Berkeley Packet Filter expressions, such as `tcp`, `udp`, and `port 53`.
-- **Live traffic dashboard** — Monitor packet rate, total packets, traffic volume, and protocol distribution.
-- **Packet inspection** — View timestamps, protocols, source and destination addresses, ports, packet sizes, and TCP flags.
-- **PCAP export** — Save captured traffic for later analysis using compatible packet-analysis tools.
-- **Security alerts** — Apply heuristic rules to flag repeated TCP SYN attempts and traffic to configurable watched destination ports.
-- **Responsive capture architecture** — Run packet capture in a background worker and deliver packet updates in batches.
-- **Resource-conscious display** — Limit the visible packet feed to reduce GUI overhead during high-volume capture.
+### Network Monitoring
+- Capture and monitor network packets in real time.
+- Inspect packet source and destination addresses.
+- View protocols, packet sizes, TCP flags, and timestamps.
+- Monitor network traffic through a desktop application or browser dashboard.
+
+### Security Monitoring
+- Detect suspicious network activity using a security detection module.
+- Display security alerts alongside captured traffic.
+- Monitor packet activity and traffic statistics in real time.
+
+### Desktop Application
+- GUI built with PySide6.
+- Real-time packet display.
+- Packet statistics and security alerts.
+- Dedicated packet capture worker to keep the interface responsive.
+
+### Web Dashboard
+- Browser-based interface powered by FastAPI.
+- Live packet updates using WebSockets.
+- Start and stop packet capture from the dashboard.
+- Real-time traffic statistics and protocol visualization.
+- Packet table and security alert history.
+- Responsive dark-themed interface.
+
+## Screenshots
+
+### Desktop Application
+
+![NetSentry desktop dashboard](screenshots/dashboard.png)
+
+### Desktop Security Alerts
+
+![NetSentry security alerts](screenshots/security-alerts.png)
+
+### Web Dashboard
+
+![NetSentry browser dashboard](screenshots/web-dashboard.png)
 
 ## Technology Stack
 
-| Technology | Purpose |
-|---|---|
-| Python 3.11 | Application development |
-| Scapy | Packet capture and packet analysis |
-| PySide6 | Desktop GUI |
-| pyqtgraph | Real-time traffic visualization |
-| Npcap | Windows packet-capture support |
-| QThread | Background capture processing |
+- **Python 3.11**
+- **Scapy** — packet capture and network packet analysis
+- **PySide6** — desktop GUI
+- **FastAPI** — web application backend
+- **Uvicorn** — ASGI server
+- **WebSockets** — live dashboard updates
+- **PyQtGraph** — data visualization
 
 ## Project Structure
 
 ```text
-PacketSniffer/
+NetSentry/
 ├── main.py
 ├── run_gui.py
+├── run_web.py
 ├── netsentry/
 │   ├── __init__.py
 │   ├── gui.py
 │   ├── capture_worker.py
-│   └── security_detector.py
+│   ├── packet_utils.py
+│   ├── security_detector.py
+│   └── web/
+│       ├── __init__.py
+│       ├── app.py
+│       ├── capture_worker.py
+│       ├── test_app.py
+│       ├── test_capture_worker.py
+│       └── static/
+│           ├── index.html
+│           ├── style.css
+│           └── app.js
 ├── captures/
 ├── screenshots/
 ├── requirements.txt
@@ -46,152 +83,118 @@ PacketSniffer/
 └── README.md
 ```
 
-The `main.py` file contains the original command-line sniffer and shared packet-analysis helpers. The `run_gui.py` file launches the desktop application.
-
 ## Requirements
 
-- Windows 11 (Windows 10 may also work with a compatible setup)
-- Python 3.11
-- Npcap installed and configured for packet capture
-- Visual Studio Code or another Python-compatible editor
-- Administrator privileges if required by your Windows/Npcap configuration
+- Windows, Linux, or another operating system supported by the required Python packages.
+- Python 3.11 recommended.
+- Npcap on Windows for packet capture.
+- Administrator/root privileges may be required to capture packets, depending on the operating system and capture interface.
 
 ## Installation
 
-### 1. Install Python
+### 1. Clone the repository
 
-Install Python 3.11 and ensure the Python launcher or executable is available from your terminal.
-
-Verify your installation:
-
-```powershell
-py -3.11 --version
-```
-
-### 2. Install Npcap
-
-Download Npcap from the official website:
-
-https://npcap.com/
-
-Follow its installation instructions. Packet capture may require elevated privileges depending on the Npcap configuration and Windows permissions.
-
-### 3. Clone the repository
-
-```powershell
-git clone https://github.com/YOUR_USERNAME/NetSentry.git
+```bash
+git clone https://github.com/Chaos322/NetSentry.git
 cd NetSentry
 ```
 
-Replace `YOUR_USERNAME` with your GitHub username.
+### 2. Create a virtual environment
 
-### 4. Create a virtual environment
+```bash
+python -m venv venv
+```
+
+Activate it on Windows PowerShell:
 
 ```powershell
-py -3.11 -m venv venv
 .\venv\Scripts\Activate.ps1
 ```
 
-A virtual environment keeps this project's Python packages separate from other projects.
+### 3. Install dependencies
 
-If PowerShell blocks activation, you can run the virtual environment's Python directly instead of changing system-wide execution policy.
-
-### 5. Install dependencies
-
-```powershell
+```bash
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
-### 6. Launch NetSentry
+### 4. Install Npcap on Windows
 
-```powershell
+Install Npcap from the official website if it is not already installed:
+
+https://npcap.com/
+
+Follow its installation instructions and ensure packet capture is enabled for your environment.
+
+## Running NetSentry
+
+### Desktop Application
+
+Run:
+
+```bash
 python run_gui.py
 ```
 
-Select an available network interface, optionally enter a BPF filter, and click **Start Capture**.
+The desktop application should open in a separate window.
 
-Click **Stop Capture** to finish the session and save the captured packets.
+### Browser-Based Dashboard
 
-## Usage
+Run:
 
-### Packet Monitoring
+```bash
+python run_web.py
+```
 
-1. Launch the application.
-2. Select the network interface you want to monitor.
-3. Optionally enter a BPF filter.
-4. Start the capture.
-5. Inspect packets in the live packet feed.
-6. Review the dashboard's packet-rate graph and protocol distribution.
-7. Stop the capture when finished.
+Open the following URL in your browser:
 
-Example BPF filters:
+http://127.0.0.1:8000
 
-| Filter | Description |
-|---|---|
-| `tcp` | TCP traffic |
-| `udp` | UDP traffic |
-| `port 53` | Traffic using port 53 |
-| `icmp` | ICMP traffic |
-| `host 192.168.1.1` | Traffic to or from the specified host |
+Keep the terminal running while using the dashboard. Press `Ctrl+C` in the terminal to stop the web server.
 
-### Security Alerts
+## Running Tests
 
-Open the Security Alerts tab to view detections produced by the configured rules.
+Run the web application tests:
 
-Current rules include:
+```bash
+python -m pytest netsentry/web/test_app.py -v
+```
 
-- Repeated initial TCP SYN attempts from a source within a configured time window.
-- Traffic directed to configured watched destination ports.
+Run the packet capture worker tests:
 
-These rules use heuristics. A flagged connection or port does not establish that an attack occurred, and legitimate activity can trigger an alert.
+```bash
+python -m pytest netsentry/web/test_capture_worker.py -v
+```
 
-### PCAP Files
+Run all tests:
 
-Capture files are saved in the local `captures/` directory. They can be analyzed later using Wireshark or other compatible tools.
+```bash
+python -m pytest -v
+```
 
-Captured traffic may contain sensitive metadata or application information. Handle these files carefully.
+## Important Notes
 
-## Screenshots
-
-### Live Traffic Dashboard
-
-![NetSentry live traffic dashboard](screenshots/dashboard.png)
-
-### Security Alerts
-
-![NetSentry security alerts](screenshots/security-alerts.png)
-
-## Current Limitations
-
-- Packet visibility depends on the selected interface, capture permissions, and BPF filter.
-- The dashboard describes captured traffic, not necessarily every packet on the network.
-- Security detections are rule-based heuristics rather than a validated intrusion detection system.
-- Watched ports and repeated SYN traffic can produce false positives.
-- The application does not establish whether a connection succeeded or prove malicious intent.
-- Traffic analysis may be limited when protocols are encrypted.
-- Performance depends on packet volume, system resources, and capture configuration.
-
-## Responsible Use
-
-Use NetSentry only on networks and devices you own or are explicitly authorized to monitor.
-
-Respect privacy, applicable laws, organizational policies, and data-handling requirements. Do not publish PCAP files containing private or sensitive traffic.
+- Only capture network traffic on systems and networks you own or have explicit permission to monitor.
+- Packet capture may require elevated privileges.
+- Captured traffic can contain sensitive information. Keep capture files private and handle them responsibly.
+- Local packet capture availability depends on your operating system, permissions, network interface, and Npcap configuration.
+- The web dashboard is configured to run locally at `127.0.0.1` by default. Avoid exposing it to untrusted networks without appropriate security controls.
+- Automated tests do not replace testing packet capture on your own system.
 
 ## Future Improvements
 
 Potential future enhancements include:
 
-- Configurable detection thresholds through the GUI.
-- Additional traffic anomaly detection rules.
-- Exportable security alert reports.
-- Dashboard performance and usability improvements.
-- Automated tests for packet classification and detection rules.
-
-## Author
-
-Developed as a hands-on Python and defensive cybersecurity project.
+- More advanced traffic filtering and packet inspection.
+- Expanded security detection rules.
+- Exportable traffic statistics and reports.
+- Improved alert categorization and analysis.
+- Additional dashboard customization.
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is distributed under the license included in the repository. See the `LICENSE` file for details.
+
+## Author
+
+Developed as a Python-based network monitoring and cybersecurity project.
